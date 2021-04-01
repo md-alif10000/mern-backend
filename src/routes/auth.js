@@ -1,6 +1,14 @@
 const router = require("express").Router();
 
-const {userRegister, userLogin, requireLogin}=require("../controller/auth");
+
+const {
+	userRegister,
+	userLogin,
+	requireLogin,
+	userRegisterOtp,
+	passUpdateOtp,
+	changePassword,
+} = require("../controller/auth");
 const { validateRegisterRequest, isRegisterRequestValidated,
   validateLoginRequest,
   isLoginRequestValidated
@@ -14,6 +22,11 @@ router.post("/login",
   validateLoginRequest,
   isLoginRequestValidated,
   userLogin);
+
+router.post('/register_verify',userRegisterOtp)
+router.post('/pass_update_otp',passUpdateOtp)
+router.post("/change_password", changePassword);
+
 
 
 router.post(
