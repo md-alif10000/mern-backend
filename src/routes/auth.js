@@ -8,6 +8,7 @@ const {
 	userRegisterOtp,
 	passUpdateOtp,
 	changePassword,
+	googleLogin,
 } = require("../controller/auth");
 const { validateRegisterRequest, isRegisterRequestValidated,
   validateLoginRequest,
@@ -26,6 +27,7 @@ router.post("/login",
 router.post('/register_verify',userRegisterOtp)
 router.post('/pass_update_otp',passUpdateOtp)
 router.post("/change_password", changePassword);
+router.post('/google_login',googleLogin)
 
 
 

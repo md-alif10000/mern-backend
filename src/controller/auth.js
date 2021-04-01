@@ -3,10 +3,16 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const shortid = require("shortid");
+const { OAuth2Client } = require("google-auth-library");
 const nodemailer = require("nodemailer");
+const googleClientId =
+	"657189057409-g02l0tmglfd02pq1dcd4ns4dgv1465b5.apps.googleusercontent.com";
+console.log(googleClientId);
 const accountSID = "ACe77966ea35e1c4ce1da14c34a61daede";
 console.log(accountSID);
 const authToken = "81af2bf043469e85c1d77d1391498ab3";
+
+googleClient = new OAuth2Client(googleClientId);
 
 const client = require("twilio")(accountSID, authToken);
 
@@ -32,7 +38,7 @@ exports.userRegisterOtp = (req, res) => {
 					to: `+88${phone}`,
 					channel: "sms",
 				})
-				.then(( data,error) => {
+				.then((data, error) => {
 					if (error) {
 						return res.status(400).json({ error });
 					}
@@ -48,7 +54,7 @@ exports.userRegisterOtp = (req, res) => {
 };
 exports.userRegister = (req, res) => {
 	const { name, email, password, phone, otp } = req.body;
-	console.log('user register....')
+	console.log("user register....");
 
 	client.verify
 		.services(process.env.T_SERVICE_ID)
@@ -59,7 +65,7 @@ exports.userRegister = (req, res) => {
 		.then(async (data) => {
 			if (data.status === "approved") {
 				const hash = await bcrypt.hash(password, 9);
-				
+
 				const _user = new User({
 					name,
 					email,
@@ -113,8 +119,6 @@ exports.userRegister = (req, res) => {
 				return res.status(400).json({ message: "Invalid OTP" });
 			}
 		});
-
-
 };
 
 //Login Config
@@ -157,12 +161,12 @@ exports.userLogin = async (req, res) => {
 								expiresIn: "7 day",
 							}
 						);
-						const { _id, name, email, role, balance,phone } = user;
+						const { _id, name, email, role, balance, phone } = user;
 
 						return res.status(200).json({
 							token,
 							message: "Login successfull",
-							user: { _id, name, email, role, balance,phone },
+							user: { _id, name, email, role, balance, phone },
 						});
 					}
 				}
@@ -175,14 +179,10 @@ exports.userLogin = async (req, res) => {
 	}
 };
 
+exports.passUpdateOtp = (req, res) => {
+	const { phone } = req.body;
 
-exports.passUpdateOtp=(req,res)=>{
-	const {phone}=req.body
-
-	console.log(phone)
-
-
-	
+	console.log(phone);
 	User.findOne({ phone }).exec(async (error, user) => {
 		if (error) {
 			return res.status(400).json({
@@ -190,7 +190,7 @@ exports.passUpdateOtp=(req,res)=>{
 			});
 		}
 		if (!user) {
-			 return res.status(404).json({
+			return res.status(404).json({
 				message: "No user found",
 			});
 		}
@@ -214,19 +214,11 @@ exports.passUpdateOtp=(req,res)=>{
 		}
 		// sent otp to verify user
 	});
+};
 
-}
-
-
-
-exports.changePassword=(req,res)=>{
-	const {userPhone,password,userOtp}=req.body
-	console.log(req.body)
-
-
-
-
-
+exports.changePassword = (req, res) => {
+	const { userPhone, password, userOtp } = req.body;
+	console.log(req.body);
 
 	client.verify
 		.services(process.env.T_SERVICE_ID)
@@ -240,22 +232,102 @@ exports.changePassword=(req,res)=>{
 				User.findOneAndUpdate(
 					{ phone: userPhone },
 					{ password: newPassword },
-					( error, user) => {
+					(error, user) => {
 						if (error) return res.status(400).json({ error });
 						if (user) {
 							return res.status(201).json({ user });
 						}
 					}
 				);
-				
-			
 			} else {
 				return res.status(401).json({ message: "Invalid OTP" });
 			}
 		});
-	
+};
 
+exports.googleLogin = (req, res) => {
+	const { tokenId } = req.body;
 
+	googleClient
+		.verifyIdToken({ idToken: tokenId, audience: googleClientId })
+		.then((response) => {
+			const { email_verified, name, email, picture } = response.payload;
+			console.log(response.payload);
+			console.log({ email_verified, name, email, picture });
+			User.findOne({ email }).exec((err, user) => {
+				if (err)
+					return res.status(400).json({ error: "Something went wrong.." });
+				else {
+					if (user) {
+						const token = jwt.sign(
+							{ _id: user._id, role: user.role },
+							process.env.JWT_SECRET,
+							{
+								expiresIn: "7 day",
+							}
+						);
+						const { _id, name, email, role, balance, phone } = user;
 
+						return res.status(200).json({
+							token,
+							message: "Login successfull",
+							user: { _id, name, email, role, balance, phone },
+						});
+					}else{
+						let password=email+process.env.JWT_SECRET
+						const user = new User({
+							name,
+							email,
+							userName: shortid.generate(),
+							password,
+							profilePicture:picture,
+						});
+						console.log('new user',user)
+					let transporter = nodemailer.createTransport({
+						service: "gmail",
+						auth: {
+							user: process.env.EMAIL,
+							pass: process.env.PASS,
+						},
+					});
 
-}
+					console.log(process.env.EMAIL);
+					let mailOptions = {
+						from: process.env.EMAIL,
+						to: email,
+						subject: "New account Registration",
+						text: "Successfully registered your account.......",
+					};
+
+					transporter.sendMail(mailOptions, (err, data) => {
+						if (err) {
+							console.log(err);
+							return res.status(400).json({ err });
+						} else {
+							const token = jwt.sign(
+								{ _id: user._id, role: user.role },
+								process.env.JWT_SECRET,
+								{
+									expiresIn: "7 day",
+								}
+							);
+							user.save((error, data) => {
+								if (error) {
+									return res.status(400).json({
+										error,
+									});
+								}
+
+								return res.status(201).json({
+									user: data,
+									token
+								});
+							});
+						}
+					});
+
+					}
+				}
+			});
+		});
+};
