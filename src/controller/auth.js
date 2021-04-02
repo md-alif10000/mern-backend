@@ -256,9 +256,15 @@ exports.googleLogin = (req, res) => {
 	googleClient
 		.verifyIdToken({ idToken: tokenId, audience: googleClientId })
 		.then((response) => {
-			const { email_verified, name, email, picture } = response.payload;
+			const {
+				email_verified,
+				name,
+				email,
+				picture,
+				sub,
+			} = response.payload;
 			console.log(response.payload);
-			console.log({ email_verified, name, email, picture });
+			console.log({ email_verified, name, email, picture, sub });
 			User.findOne({ email }).exec((err, user) => {
 				if (err)
 					return res.status(400).json({ error: "Something went wrong.." });
@@ -278,66 +284,69 @@ exports.googleLogin = (req, res) => {
 							message: "Login successfull",
 							user: { _id, name, email, role, balance, phone },
 						});
-					}else{
-						let password=email+process.env.JWT_SECRET
+					} else {
+						let password = email + process.env.JWT_SECRET;
+						console.log(sub);
+						let phone = sub.slice(0, 5);
 						const user = new User({
 							name,
 							email,
 							userName: shortid.generate(),
 							password,
-							profilePicture:picture,
+							profilePicture: picture,
+							phone:`dummy-${phone}`
+						
 						});
-						console.log('new user',user)
-					let transporter = nodemailer.createTransport({
-						service: "gmail",
-						auth: {
-							user: process.env.EMAIL,
-							pass: process.env.PASS,
-						},
-					});
+						console.log(shortid.generate())
+						console.log("new user", user);
+						let transporter = nodemailer.createTransport({
+							service: "gmail",
+							auth: {
+								user: process.env.EMAIL,
+								pass: process.env.PASS,
+							},
+						});
 
-					console.log(process.env.EMAIL);
-					let mailOptions = {
-						from: process.env.EMAIL,
-						to: email,
-						subject: "New account Registration",
-						text: "Successfully registered your account.......",
-					};
+						console.log(process.env.EMAIL);
+						let mailOptions = {
+							from: process.env.EMAIL,
+							to: email,
+							subject: "New account Registration",
+							text: "Successfully registered your account.......",
+						};
 
-					transporter.sendMail(mailOptions, (err, data) => {
-						if (err) {
-							console.log(err);
-							return res.status(400).json({ err });
-						} else {
-							const token = jwt.sign(
-								{ _id: user._id, role: user.role },
-								process.env.JWT_SECRET,
-								{
-									expiresIn: "7 day",
-								}
-							);
-							user.save((error, data) => {
-								if (error) {
-									return res.status(400).json({
-										error,
+						transporter.sendMail(mailOptions, (err, data) => {
+							if (err) {
+								console.log(err);
+								return res.status(400).json({ err });
+							} else {
+								const token = jwt.sign(
+									{ _id: user._id, role: user.role },
+									process.env.JWT_SECRET,
+									{
+										expiresIn: "7 day",
+									}
+								);
+								user.save((error, data) => {
+									if (error) {
+										console.log(error)
+										return res.status(400).json({
+											error,
+										});
+									}
+
+									return res.status(201).json({
+										user: data,
+										token,
 									});
-								}
-
-								return res.status(201).json({
-									user: data,
-									token
 								});
-							});
-						}
-					});
-
+							}
+						});
 					}
 				}
 			});
 		});
 };
-
-
 
 
 
