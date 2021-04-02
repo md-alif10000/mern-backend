@@ -5,6 +5,7 @@ const { validationResult } = require("express-validator");
 const shortid = require("shortid");
 const { OAuth2Client } = require("google-auth-library");
 const nodemailer = require("nodemailer");
+const fetch=require('node-fetch') 
 const googleClientId =
 	"657189057409-g02l0tmglfd02pq1dcd4ns4dgv1465b5.apps.googleusercontent.com";
 console.log(googleClientId);
@@ -245,6 +246,10 @@ exports.changePassword = (req, res) => {
 		});
 };
 
+
+
+
+
 exports.googleLogin = (req, res) => {
 	const { tokenId } = req.body;
 
@@ -330,4 +335,98 @@ exports.googleLogin = (req, res) => {
 				}
 			});
 		});
+};
+
+
+
+
+
+
+exports.facebookLogin = (req, res) => {
+	console.log(req.body)
+	const { accessToken,userID } = req.body;
+	let urlGraphFacebook=`https://graph.facebook.com/v2.11/${userID}/?fields=id,name,picture,email&access_token=${accessToken}`
+
+	fetch(urlGraphFacebook, { method: "GET" })
+		.then((response) => response.json())
+		.then((response) => {
+			const { name, email, picture, id } = response;
+
+			console.log("Response", response);
+
+			User.findOne({ email }).exec((err, user) => {
+				if (err)
+					return res.status(400).json({ error: "Something went wrong.." });
+				else {
+					if (user) {
+						const token = jwt.sign(
+							{ _id: user._id, role: user.role },
+							process.env.JWT_SECRET,
+							{
+								expiresIn: "7 day",
+							}
+						);
+						const { _id, name, email, role, balance, phone } = user;
+						return res.status(200).json({
+							token,
+							message: "Login successfull",
+							user: { _id, name, email, role, balance, phone },
+						});
+					} else {
+						let password = email + process.env.JWT_SECRET;
+						const user = new User({
+							name,
+							email,
+							userName: shortid.generate(),
+							password,
+							profilePicture: picture.data.url,
+						});
+						console.log("new user", user);
+						let transporter = nodemailer.createTransport({
+							service: "gmail",
+							auth: {
+								user: process.env.EMAIL,
+								pass: process.env.PASS,
+							},
+						});
+
+						console.log(process.env.EMAIL);
+						let mailOptions = {
+							from: process.env.EMAIL,
+							to: email,
+							subject: "New account Registration",
+							text: "Successfully registered your account.......",
+						};
+
+						transporter.sendMail(mailOptions, (err, data) => {
+							if (err) {
+								console.log(err);
+								return res.status(400).json({ err });
+							} else {
+								const token = jwt.sign(
+									{ _id: user._id, role: user.role },
+									process.env.JWT_SECRET,
+									{
+										expiresIn: "7 day",
+									}
+								);
+								user.save((error, data) => {
+									if (error) {
+										return res.status(400).json({
+											error,
+										});
+									}
+
+									return res.status(201).json({
+										user: data,
+										token,
+									});
+								});
+							}
+						});
+					}
+				}
+			});
+		});
+
 };

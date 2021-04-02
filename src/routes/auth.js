@@ -9,14 +9,12 @@ const {
 	passUpdateOtp,
 	changePassword,
 	googleLogin,
+	facebookLogin,
 } = require("../controller/auth");
 const { validateRegisterRequest, isRegisterRequestValidated,
   validateLoginRequest,
   isLoginRequestValidated
 } = require("../validators/auth");
-
-
-
 
 
 router.post("/login",
@@ -29,6 +27,7 @@ router.post('/pass_update_otp',passUpdateOtp)
 router.post("/change_password", changePassword);
 router.post('/google_login',googleLogin)
 
+router.post("/facebook_login", facebookLogin);
 
 
 router.post(
