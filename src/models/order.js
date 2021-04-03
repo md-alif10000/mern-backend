@@ -25,6 +25,10 @@ const orderSchema = new mongoose.Schema(
 					type: Number,
 					required: true,
 				},
+				purchasedQty: {
+					type: Number,
+					required: true,
+				},
 			},
 		],
 		paymentStatus: {
@@ -34,7 +38,7 @@ const orderSchema = new mongoose.Schema(
 		},
 		paymentType: {
 			type: String,
-			enum: ["cod", "card",'ssl','bkash'],
+			enum: ["cod", "card", "ssl", "bkash"],
 			required: true,
 		},
 		orderStatus: [
@@ -44,11 +48,11 @@ const orderSchema = new mongoose.Schema(
 					enum: ["ordered", "packed", "shipped", "delivered"],
 					default: "ordered",
 				},
-				date:{type:Date},
-				isCompleted:{
-					type:Boolean,
-					default:false
-				}
+				date: { type: Date },
+				isCompleted: {
+					type: Boolean,
+					default: false,
+				},
 			},
 		],
 	},
