@@ -22,6 +22,7 @@ const adminOrderRoute = require("./routes/admin/order.routes");
 const adminRechargeRoute = require("./routes/admin/recharges");
 const adminTicketRoute=require('./routes/admin/ticket')
 const userTicketRoute=require('./routes/ticket')
+const couponRoute=require('./routes/coupon')
 
 env.config();
 
@@ -59,6 +60,7 @@ app.use("/api", rechargeRoute);
 app.use("/api", adminRechargeRoute);
 app.use("/api", adminTicketRoute);
 app.use("/api", userTicketRoute);
+app.use("/api", couponRoute);
 app.get("/", (req, res) => {
 	res.json({
 		message: "hello",
