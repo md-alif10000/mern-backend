@@ -11,7 +11,7 @@ const googleClientId =
 console.log(googleClientId);
 const accountSID = "ACe77966ea35e1c4ce1da14c34a61daede";
 console.log(accountSID);
-const authToken = "81af2bf043469e85c1d77d1391498ab3";
+const authToken = "13378a0c621de66370b4a43140dbd232";
 
 googleClient = new OAuth2Client(googleClientId);
 
@@ -33,6 +33,9 @@ exports.userRegisterOtp = (req, res) => {
 			});
 		}
 		if (!user) {
+			console.log("SERVICE ID", process.env.T_SERVICE_ID);
+			console.log("SERVICE ID", accountSID);
+				console.log("SERVICE ID", authToken);
 			client.verify
 				.services(process.env.T_SERVICE_ID)
 				.verifications.create({
@@ -48,6 +51,7 @@ exports.userRegisterOtp = (req, res) => {
 						phonenumber: phone,
 						data,
 					});
+					
 				});
 		}
 		// sent otp to verify user
