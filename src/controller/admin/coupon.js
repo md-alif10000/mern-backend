@@ -32,6 +32,7 @@ exports.getAllCoupon=(req,res)=>{
 
 
 exports.deleteCoupon=(req,res)=>{
+    console.log("delete",req.body)
     Coupon.findOneAndDelete({_id:req.body._id},(error,data)=>{
         if(error) return res.status(400).json({error})
         if(data){
@@ -46,6 +47,5 @@ exports.updateCoupon=(req,res)=>{
         if(error) return res.status(400).json({error})
         if(data) return res.status(201).json({data})
     })
-
 
 }
