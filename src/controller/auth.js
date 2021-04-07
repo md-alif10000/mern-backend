@@ -11,7 +11,7 @@ const googleClientId =
 console.log(googleClientId);
 const accountSID = "ACe77966ea35e1c4ce1da14c34a61daede";
 console.log(accountSID);
-const authToken = "13378a0c621de66370b4a43140dbd232";
+const authToken = "7ddd13bf67a8c0506a426688a74ae040";
 
 googleClient = new OAuth2Client(googleClientId);
 
@@ -58,7 +58,7 @@ exports.userRegisterOtp = (req, res) => {
 	});
 };
 exports.userRegister = (req, res) => {
-	const { name, email, password, phone, otp } = req.body;
+	const { name, email, password, phone, otp,profilePicture } = req.body;
 	console.log("user register....");
 
 	client.verify
@@ -70,6 +70,8 @@ exports.userRegister = (req, res) => {
 		.then(async (data) => {
 			if (data.status === "approved") {
 				const hash = await bcrypt.hash(password, 9);
+				    const profilePicture = req.file.filename;
+					console.log(profilePicture)
 
 				const _user = new User({
 					name,
@@ -77,6 +79,7 @@ exports.userRegister = (req, res) => {
 					userName: shortid.generate(),
 					phone,
 					password: hash,
+					profilePicture,
 				});
 
 				let transporter = nodemailer.createTransport({

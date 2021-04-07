@@ -1,5 +1,5 @@
 const router = require("express").Router();
-
+const {upload}=require('../common-middleware/index')
 
 const {
 	userRegister,
@@ -34,6 +34,7 @@ router.post(
   "/register",
   validateRegisterRequest,
   isRegisterRequestValidated,
+  upload.single('profilePicture'),
   userRegister
 );
 
